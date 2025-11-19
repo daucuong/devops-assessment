@@ -1,0 +1,15 @@
+auth:
+  strategy: anonymous
+external_services:
+  istio:
+    url_service_version: ""
+ingress:
+  enabled: true
+  hosts:
+    - kiali.local
+  paths:
+    - /
+  tls:
+    - secretName: kiali-tls
+      hosts:
+        - kiali.local

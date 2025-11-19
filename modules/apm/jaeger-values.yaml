@@ -1,0 +1,20 @@
+allInOne:
+  enabled: true
+ingress:
+  enabled: true
+  hosts:
+    - jaeger.local
+  paths:
+    - /
+  tls:
+    - secretName: jaeger-tls
+      hosts:
+        - jaeger.local
+storage:
+  type: memory
+service:
+  type: ClusterIP
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
