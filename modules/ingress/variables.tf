@@ -1,0 +1,60 @@
+# NGINX Ingress Controller Variables
+variable "ingress_namespace" {
+  description = "Namespace for NGINX Ingress Controller"
+  type        = string
+  default     = "ingress-nginx"
+}
+
+variable "nginx_ingress_name" {
+  description = "Name of NGINX Ingress Helm release"
+  type        = string
+  default     = "nginx-ingress"
+}
+
+variable "nginx_ingress_repository" {
+  description = "Helm repository for NGINX Ingress"
+  type        = string
+  default     = "https://kubernetes.github.io/ingress-nginx"
+}
+
+variable "nginx_ingress_chart" {
+  description = "Helm chart for NGINX Ingress"
+  type        = string
+  default     = "ingress-nginx"
+}
+
+variable "nginx_ingress_version" {
+  description = "Version of NGINX Ingress chart"
+  type        = string
+  default     = "4.10.0"
+}
+
+variable "nginx_service_type" {
+  description = "Service type for NGINX Ingress"
+  type        = string
+  default     = "NodePort"
+}
+
+variable "nginx_cpu_request" {
+  description = "CPU request for NGINX controller"
+  type        = string
+  default     = "100m"
+}
+
+variable "nginx_memory_request" {
+  description = "Memory request for NGINX controller"
+  type        = string
+  default     = "90Mi"
+}
+
+variable "nginx_cpu_limit" {
+  description = "CPU limit for NGINX controller"
+  type        = string
+  default     = "500m"
+}
+
+variable "nginx_memory_limit" {
+  description = "Memory limit for NGINX controller"
+  type        = string
+  default     = "512Mi"
+}

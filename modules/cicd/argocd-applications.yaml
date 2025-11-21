@@ -1,0 +1,58 @@
+---
+# ArgoCD Application for Echo Server
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: echo-server
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/daucuong/devops-assessment.git
+    path: k8s
+    targetRevision: main
+    helm:
+      releaseName: echo-server
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: application
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# ArgoCD Application for PostgreSQL Database
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-ha
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/daucuong/devops-assessment.git
+    path: k8s/database
+    targetRevision: main
+    helm:
+      releaseName: postgres
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: database
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
