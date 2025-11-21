@@ -11,7 +11,7 @@ resource "helm_release" "cert_manager" {
   chart      = "cert-manager"
   namespace  = kubernetes_namespace.cert_manager.metadata[0].name
   version    = "v1.12.0"
-  values =  [file("${path.module}/cert-manager-values.yaml")]
+  values     = [file("${path.module}/cert-manager-values.yaml")]
 }
 
 # external-secrets for secret management

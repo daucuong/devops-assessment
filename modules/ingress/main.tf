@@ -22,7 +22,7 @@ resource "kubernetes_cluster_role" "ingress_nginx" {
   rule {
     api_groups = [""]
     resources  = ["configmaps", "endpoints", "nodes", "pods", "secrets"]
-    verbs      = ["list", "watch"]
+    verbs      = ["get", "list", "watch"]
   }
 
   rule {
@@ -60,6 +60,18 @@ resource "kubernetes_cluster_role" "ingress_nginx" {
     resources  = ["ingressclasses"]
     verbs      = ["get", "list", "watch"]
   }
+
+  rule {
+    api_groups = ["coordination.k8s.io"]
+    resources  = ["leases"]
+    verbs      = ["get", "list", "watch", "create", "update", "patch"]
+  }
+
+  rule {
+    api_groups = ["discovery.k8s.io"]
+    resources  = ["endpointslices"]
+    verbs      = ["get", "list", "watch"]
+  }
 }
 
 resource "kubernetes_cluster_role_binding" "ingress_nginx" {
@@ -93,7 +105,7 @@ resource "kubernetes_config_map" "ingress_nginx_controller" {
 
   data = {
     # Access logging configuration
-    "access-log-path"   = "/var/log/nginx/access.log"
+    #"access-log-path"   = "/var/log/nginx/access.log"
     "access-log-format" = <<EOF
 {
   "time": "$time_iso8601",
@@ -187,26 +199,24 @@ resource "kubernetes_config_map" "fluent_bit_config" {
 
 [INPUT]
     Name              tail
-    Path              /var/log/nginx/access.log
-    Parser            json
-    Tag               nginx.access
+    Path              /var/log/containers/*ingress-nginx-controller*.log
+    Parser            cri
+    Tag               nginx.ingress
     Refresh_Interval  5
 
 [OUTPUT]
-    Name  elasticsearch
-    Match nginx.*
+    Name  es
+    Match nginx.ingress
     Host  elasticsearch.logging.svc.cluster.local
     Port  9200
     Index nginx-access
-    Type  nginx_access
+    Suppress_Type_Name On
 EOF
 
     "parsers.conf" = <<EOF
 [PARSER]
-    Name        json
-    Format      json
-    Time_Key    time
-    Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+    Name cri
+    Format cri
 EOF
   }
 }
@@ -328,6 +338,12 @@ resource "kubernetes_daemonset" "fluent_bit" {
           operator = "Equal"
           effect   = "NoSchedule"
         }
+
+        security_context {
+          run_as_user  = 101
+          run_as_group = 101
+          fs_group     = 101
+        }
       }
     }
   }
@@ -355,15 +371,31 @@ resource "kubernetes_service" "ingress_nginx_controller" {
       name        = "http"
       port        = 80
       target_port = "80"
+      node_port   = 30080
     }
 
     port {
       name        = "https"
       port        = 443
       target_port = "443"
+      node_port   = 30443
     }
 
-    type = "LoadBalancer"
+    type = "NodePort"
+  }
+}
+
+resource "kubernetes_config_map" "tcp_services" {
+  metadata {
+    name      = "tcp-services"
+    namespace = kubernetes_namespace.ingress_nginx.metadata[0].name
+  }
+}
+
+resource "kubernetes_config_map" "udp_services" {
+  metadata {
+    name      = "udp-services"
+    namespace = kubernetes_namespace.ingress_nginx.metadata[0].name
   }
 }
 
@@ -470,10 +502,10 @@ resource "kubernetes_deployment" "ingress_nginx_controller" {
             failure_threshold     = 3
           }
 
-          volume_mount {
-            name       = "nginx-logs"
-            mount_path = "/var/log/nginx"
-          }
+          # volume_mount {
+          #   name       = "nginx-logs"
+          #   mount_path = "/var/log/nginx"
+          # }
 
           resources {
             requests = {
@@ -483,14 +515,14 @@ resource "kubernetes_deployment" "ingress_nginx_controller" {
           }
         }
 
-        volume {
-          name = "nginx-logs"
+        # volume {
+        #   name = "nginx-logs"
 
-          host_path {
-            path = "/var/log/nginx"
-            type = "DirectoryOrCreate"
-          }
-        }
+        #   host_path {
+        #     path = "/var/log/nginx"
+        #     type = "DirectoryOrCreate"
+        #   }
+        # }
 
         node_selector = {
           "ingress-ready" = "true"
@@ -506,6 +538,12 @@ resource "kubernetes_deployment" "ingress_nginx_controller" {
           key      = "node-role.kubernetes.io/master"
           operator = "Equal"
           effect   = "NoSchedule"
+        }
+
+        security_context {
+          run_as_user  = 101
+          run_as_group = 101
+          fs_group     = 101
         }
       }
     }

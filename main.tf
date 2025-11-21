@@ -33,14 +33,14 @@ module "cluster" {
   source = "./modules/cluster"
 }
 
-module "loadbalancer" {
-  source     = "./modules/loadbalancer"
-  depends_on = [module.cluster]
-}
+# module "loadbalancer" {
+#   source     = "./modules/loadbalancer"
+#   depends_on = [module.cluster]
+# }
 
 module "ingress" {
   source     = "./modules/ingress"
-  depends_on = [module.loadbalancer]
+  depends_on = [module.cluster]
 }
 
 module "database" {
