@@ -3,6 +3,8 @@ image:
   repository: acme
   tag: latest
 
+replicas: 2
+
 service:
   type: LoadBalancer
   port: 80
@@ -19,3 +21,30 @@ ingress:
       paths:
         - path: /api
           pathType: Prefix
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

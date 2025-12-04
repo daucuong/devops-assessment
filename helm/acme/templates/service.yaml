@@ -2,11 +2,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: acme
+  name: {{ include "acme.fullname" . }}
+  labels:
+    {{- include "acme.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app: acme
+    {{- include "acme.selectorLabels" . | nindent 4 }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: 3000
+      targetPort: http
+      protocol: TCP
+      name: http
