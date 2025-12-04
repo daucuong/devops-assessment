@@ -23,15 +23,28 @@ variable "chart_path" {
   default     = "./helm/acme"
 }
 
-# Container Image Configuration
+# UI Container Image Configuration
 variable "image_repository" {
-  description = "Docker image repository"
+  description = "Docker image repository for UI"
   type        = string
   default     = "acme"
 }
 
 variable "image_tag" {
-  description = "Docker image tag"
+  description = "Docker image tag for UI"
+  type        = string
+  default     = "latest"
+}
+
+# API Container Image Configuration
+variable "api_image_repository" {
+  description = "Docker image repository for API"
+  type        = string
+  default     = "acme-api"
+}
+
+variable "api_image_tag" {
+  description = "Docker image tag for API"
   type        = string
   default     = "latest"
 }
@@ -42,9 +55,16 @@ variable "image_pull_policy" {
   default     = "IfNotPresent"
 }
 
-# Deployment Configuration
+# UI Deployment Configuration
 variable "replicas" {
-  description = "Number of replicas"
+  description = "Number of UI replicas"
+  type        = number
+  default     = 2
+}
+
+# API Deployment Configuration
+variable "api_replicas" {
+  description = "Number of API replicas"
   type        = number
   default     = 2
 }
@@ -57,9 +77,65 @@ variable "service_type" {
 }
 
 variable "service_port" {
-  description = "Service port"
+  description = "Service port (deprecated, use ingress routing instead)"
   type        = number
   default     = 3000
+}
+
+# Autoscaling Configuration
+variable "autoscaling_enabled" {
+  description = "Enable horizontal pod autoscaling"
+  type        = bool
+  default     = true
+}
+
+variable "autoscaling_min_replicas" {
+  description = "Minimum number of replicas for autoscaling"
+  type        = number
+  default     = 2
+}
+
+variable "autoscaling_max_replicas" {
+  description = "Maximum number of replicas for autoscaling"
+  type        = number
+  default     = 10
+}
+
+variable "autoscaling_metrics" {
+  description = "Autoscaling metrics configuration"
+  type = list(object({
+    type = string
+    resource = optional(object({
+      name = string
+      target = object({
+        type                 = string
+        averageUtilization   = optional(number)
+        averageValue         = optional(string)
+      })
+    }))
+  }))
+  default = [
+    {
+      type = "Resource"
+      resource = {
+        name = "cpu"
+        target = {
+          type             = "Utilization"
+          averageUtilization = 50
+        }
+      }
+    },
+    {
+      type = "Resource"
+      resource = {
+        name = "memory"
+        target = {
+          type             = "Utilization"
+          averageUtilization = 70
+        }
+      }
+    }
+  ]
 }
 
 # Ingress Configuration

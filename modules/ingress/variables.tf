@@ -67,21 +67,15 @@ variable "app_namespace" {
 }
 
 variable "app_service_name" {
-  description = "Name of the application service"
+  description = "Name of the UI application service (deprecated, hardcoded to acme)"
   type        = string
   default     = "acme"
 }
 
 variable "app_service_port" {
-  description = "Port of the application service"
+  description = "Port of the application service (deprecated, uses port name 'http')"
   type        = number
   default     = 3000
-}
-
-variable "ingress_host" {
-  description = "Host for ingress rule (e.g., www.acme.com)"
-  type        = string
-  default     = "www.acme.com"
 }
 
 variable "ingress_name" {

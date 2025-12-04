@@ -170,13 +170,25 @@ variable "app_chart_path" {
 }
 
 variable "app_image_repository" {
-  description = "Docker image repository for ACME application"
+  description = "Docker image repository for ACME UI"
   type        = string
   default     = "acme"
 }
 
 variable "app_image_tag" {
-  description = "Docker image tag for echo-server"
+  description = "Docker image tag for ACME UI"
+  type        = string
+  default     = "latest"
+}
+
+variable "app_api_image_repository" {
+  description = "Docker image repository for ACME API"
+  type        = string
+  default     = "acme-api"
+}
+
+variable "app_api_image_tag" {
+  description = "Docker image tag for ACME API"
   type        = string
   default     = "latest"
 }
@@ -188,7 +200,13 @@ variable "app_image_pull_policy" {
 }
 
 variable "app_replicas_count" {
-  description = "Number of echo-server replicas"
+  description = "Number of UI replicas"
+  type        = number
+  default     = 2
+}
+
+variable "app_api_replicas_count" {
+  description = "Number of API replicas"
   type        = number
   default     = 2
 }
@@ -299,6 +317,62 @@ variable "app_environment_variables" {
     {
       name  = "PORT"
       value = "3000"
+    }
+  ]
+}
+
+# Application Autoscaling Variables
+variable "app_autoscaling_enabled" {
+  description = "Enable horizontal pod autoscaling for application"
+  type        = bool
+  default     = true
+}
+
+variable "app_autoscaling_min_replicas" {
+  description = "Minimum number of replicas for autoscaling"
+  type        = number
+  default     = 2
+}
+
+variable "app_autoscaling_max_replicas" {
+  description = "Maximum number of replicas for autoscaling"
+  type        = number
+  default     = 10
+}
+
+variable "app_autoscaling_metrics" {
+  description = "Autoscaling metrics configuration"
+  type = list(object({
+    type = string
+    resource = optional(object({
+      name = string
+      target = object({
+        type                 = string
+        averageUtilization   = optional(number)
+        averageValue         = optional(string)
+      })
+    }))
+  }))
+  default = [
+    {
+      type = "Resource"
+      resource = {
+        name = "cpu"
+        target = {
+          type             = "Utilization"
+          averageUtilization = 50
+        }
+      }
+    },
+    {
+      type = "Resource"
+      resource = {
+        name = "memory"
+        target = {
+          type             = "Utilization"
+          averageUtilization = 70
+        }
+      }
     }
   ]
 }

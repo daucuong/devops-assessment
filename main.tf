@@ -32,11 +32,14 @@ module "application" {
 
   release_name = var.app_release_name
 
-  image_repository   = var.app_image_repository
-  image_tag          = var.app_image_tag
-  image_pull_policy  = var.app_image_pull_policy
+  image_repository      = var.app_image_repository
+  image_tag             = var.app_image_tag
+  api_image_repository  = var.app_api_image_repository
+  api_image_tag         = var.app_api_image_tag
+  image_pull_policy     = var.app_image_pull_policy
 
-  replicas = var.app_replicas_count
+  replicas     = var.app_replicas_count
+  api_replicas = var.app_api_replicas_count
 
   service_type = var.app_service_type
   service_port = var.app_service_port
@@ -51,6 +54,11 @@ module "application" {
   cpu_limit      = var.app_cpu_limit
   memory_request = var.app_memory_request
   memory_limit   = var.app_memory_limit
+
+  autoscaling_enabled      = var.app_autoscaling_enabled
+  autoscaling_min_replicas = var.app_autoscaling_min_replicas
+  autoscaling_max_replicas = var.app_autoscaling_max_replicas
+  autoscaling_metrics      = var.app_autoscaling_metrics
 
   environment_variables = var.app_environment_variables
 }

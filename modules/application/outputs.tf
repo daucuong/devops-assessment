@@ -18,9 +18,14 @@ output "release_version" {
   value       = helm_release.application.version
 }
 
-output "service_name" {
-  description = "Service name"
-  value       = helm_release.application.name
+output "ui_service_name" {
+  description = "UI Service name"
+  value       = "acme"
+}
+
+output "api_service_name" {
+  description = "API Service name"
+  value       = "acme-api"
 }
 
 output "service_port" {

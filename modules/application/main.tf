@@ -12,22 +12,32 @@ resource "helm_release" "application" {
 
   values = [
     yamlencode({
+      ui = {
+        image = {
+          repository = var.image_repository
+          tag        = var.image_tag
+        }
+        replicas = var.replicas
+      }
+      api = {
+        image = {
+          repository = var.api_image_repository
+          tag        = var.api_image_tag
+        }
+        replicas = var.api_replicas
+      }
       image = {
-        repository = var.image_repository
-        tag        = var.image_tag
         pullPolicy = var.image_pull_policy
       }
-      replicaCount = var.replicas
       service = {
         type = var.service_type
-        port = var.service_port
       }
       ingress = {
-        enabled           = var.enable_ingress
-        className         = var.ingress_class
-        annotations       = var.ingress_annotations
-        hosts             = var.enable_ingress ? var.ingress_hosts : []
-        tls               = var.ingress_tls
+        enabled      = var.enable_ingress
+        className    = var.ingress_class
+        annotations  = var.ingress_annotations
+        hosts        = var.enable_ingress ? var.ingress_hosts : []
+        tls          = var.ingress_tls
       }
       resources = {
         requests = {
@@ -39,7 +49,12 @@ resource "helm_release" "application" {
           memory = var.memory_limit
         }
       }
-      env = var.environment_variables
+      autoscaling = {
+        enabled      = var.autoscaling_enabled
+        minReplicas  = var.autoscaling_min_replicas
+        maxReplicas  = var.autoscaling_max_replicas
+        metrics      = var.autoscaling_metrics
+      }
     })
   ]
 

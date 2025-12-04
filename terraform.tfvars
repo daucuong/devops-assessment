@@ -40,9 +40,12 @@ app_release_name      = "acme"
 
 app_image_repository  = "acme"
 app_image_tag         = "latest"
+app_api_image_repository = "acme-api"
+app_api_image_tag     = "latest"
 app_image_pull_policy = "IfNotPresent"
 
 app_replicas_count    = 2
+app_api_replicas_count = 2
 app_service_type      = "ClusterIP"
 app_service_port      = 3000
 
@@ -64,8 +67,12 @@ app_environment_variables = [
   }
 ]
 
+# Application Autoscaling
+app_autoscaling_enabled      = true
+app_autoscaling_min_replicas = 2
+app_autoscaling_max_replicas = 10
+
 # Ingress Module - Route www.acme.com and api.acme.com to application
 app_ingress_service_name    = "acme"
 app_ingress_service_port    = 3000
-app_ingress_host            = "www.acme.com"
 app_ingress_resource_name   = "app-ingress"
