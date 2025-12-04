@@ -50,12 +50,12 @@ This infrastructure implements the ACME platform—a containerized, cloud-native
     └────┬─────────────────────────────────────┘
          │
     ┌────▼──────────────────────────────────────┐
-    │  NGINX Ingress Controller (TLS Termination)│
-    │  - LoadBalancer Service (2 replicas HA)  │
-    │  - SSL/TLS via cert-manager (acme-tls)   │
-    │  - Request timeouts: 600s                │
-    │  - Pod Anti-Affinity enabled             │
-    └────┬───────────────────────────────────────┘
+    │  NGINX Ingress Controller(TLS Termination)│
+    │  - LoadBalancer Service (2 replicas HA)   │
+    │  - SSL/TLS via cert-manager (acme-tls)    │
+    │  - Request timeouts: 600s                 │
+    │  - Pod Anti-Affinity enabled              │
+    └────┬──────────────────────────────────────┘
          │
     ┌────▼────────────────────────────────────────┐
     │         Kubernetes Cluster                  │
@@ -142,6 +142,7 @@ This infrastructure implements the ACME platform—a containerized, cloud-native
   - `POSTGRES_URL` - Connection string to PostgreSQL
   - `METRICS_URL` - Endpoint for metrics collection
 - **Resource Limits:** 100m CPU request, 500m limit; 128Mi memory request, 512Mi limit
+- **Avoids CORS issues:** If the frontend is served from acme.com, calling acme.com/api avoids cross-origin configuration.
 
 ### 3. **PostgreSQL Database**
 - **Version:** 16 (latest)
