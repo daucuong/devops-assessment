@@ -83,3 +83,22 @@ variable "ingress_name" {
   type        = string
   default     = "app-ingress"
 }
+
+# Logging Variables
+variable "enable_logging" {
+  description = "Enable NGINX access logging"
+  type        = bool
+  default     = true
+}
+
+variable "log_format_main" {
+  description = "Main access log format"
+  type        = string
+  default     = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\" $request_time $upstream_response_time $upstream_addr $upstream_status"
+}
+
+variable "log_format_upstream" {
+  description = "Upstream log format (detailed request information)"
+  type        = string
+  default     = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" $request_length $request_time $upstream_addr $upstream_response_time $upstream_status $upstream_cache_status"
+}

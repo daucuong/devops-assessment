@@ -75,6 +75,16 @@ resource "helm_release" "nginx_ingress" {
           "keep-alive"               = "75"
           "keep-alive-requests"      = "100"
         }
+        # Logging configuration
+        logs = {
+          enabled = var.enable_logging
+          main = {
+            enabled = var.enable_logging
+            format  = var.log_format_main
+          }
+        }
+        # Access log format for upstream (detailed request information)
+        logFormatUpstream = var.log_format_upstream
       }
     })
   ]
