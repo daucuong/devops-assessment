@@ -1,3 +1,31 @@
+# Tagging and Resource Management Variables
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+  default     = "dev"
+}
+
+variable "project_name" {
+  description = "Project name for resource tagging"
+  type        = string
+  default     = "acme"
+}
+
+variable "common_tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
+  default = {
+    "managed-by" = "terraform"
+    "team"       = "platform"
+  }
+}
+
+variable "additional_annotations" {
+  description = "Additional annotations for ingress resource"
+  type        = map(string)
+  default     = {}
+}
+
 # NGINX Ingress Controller Variables
 variable "ingress_namespace" {
   description = "Namespace for NGINX Ingress Controller"

@@ -1,6 +1,25 @@
+locals {
+  common_labels = merge(
+    var.common_tags,
+    {
+      "app.kubernetes.io/name"       = "ingress-nginx"
+      "app.kubernetes.io/component"  = "ingress-controller"
+      "app.kubernetes.io/managed-by" = "terraform"
+      "environment"                  = var.environment
+      "project"                      = var.project_name
+    }
+  )
+}
+
 resource "kubernetes_namespace" "ingress_nginx" {
   metadata {
     name = var.ingress_namespace
+    labels = merge(
+      local.common_labels,
+      {
+        "namespace-purpose" = "ingress-controller"
+      }
+    )
   }
 }
 
@@ -105,12 +124,23 @@ resource "kubernetes_ingress_v1" "app_ingress" {
   metadata {
     name      = var.ingress_name
     namespace = var.app_namespace
-    annotations = {
-      "nginx.ingress.kubernetes.io/proxy-connect-timeout" = "600"
-      "nginx.ingress.kubernetes.io/proxy-send-timeout"    = "600"
-      "nginx.ingress.kubernetes.io/proxy-read-timeout"    = "600"
-      "nginx.ingress.kubernetes.io/proxy-body-timeout"    = "600"
-    }
+    labels = merge(
+      local.common_labels,
+      {
+        "app.kubernetes.io/name"       = "acme-ingress"
+        "app.kubernetes.io/instance"   = var.ingress_name
+        "resource-type"                = "ingress"
+      }
+    )
+    annotations = merge(
+      {
+        "nginx.ingress.kubernetes.io/proxy-connect-timeout" = "600"
+        "nginx.ingress.kubernetes.io/proxy-send-timeout"    = "600"
+        "nginx.ingress.kubernetes.io/proxy-read-timeout"    = "600"
+        "nginx.ingress.kubernetes.io/proxy-body-timeout"    = "600"
+      },
+      var.additional_annotations
+    )
   }
 
   spec {
