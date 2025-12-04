@@ -9,6 +9,8 @@
 6. [Scalability](#scalability)
 7. [Disaster Recovery](#disaster-recovery)
 8. [Observability](#observability)
+9. [Recent Improvements](#recent-improvements-latest-updates)
+10. [References](#references)
 
 ---
 
@@ -41,14 +43,18 @@ This infrastructure implements the ACME platform—a containerized, cloud-native
                          │
          ┌───────────────┴──────────────────┐
          │                                  │
-    ┌────▼─────────┐              ┌────────▼────────┐
-    │  www.acme.com│              │  api.acme.com   │
-    └────┬─────────┘              └────────┬────────┘
-         │                                  │
-    ┌────▼──────────────────────────────────▼────┐
+    ┌──────────────────────────────────────────┐
+    │         www.acme.com (Single Domain)     │
+    │  /       -> UI                           │
+    │  /api    -> API                          │
+    └────┬─────────────────────────────────────┘
+         │
+    ┌────▼──────────────────────────────────────┐
     │  NGINX Ingress Controller (TLS Termination)│
-    │  - LoadBalancer Service                    │
-    │  - SSL/TLS via cert-manager                │
+    │  - LoadBalancer Service (2 replicas HA)  │
+    │  - SSL/TLS via cert-manager (acme-tls)   │
+    │  - Request timeouts: 600s                │
+    │  - Pod Anti-Affinity enabled             │
     └────┬───────────────────────────────────────┘
          │
     ┌────▼────────────────────────────────────────┐
@@ -117,7 +123,7 @@ This infrastructure implements the ACME platform—a containerized, cloud-native
 
 ### 1. **User Interface (UI)**
 - **Image:** `acme/ui`
-- **Domain:** `www.acme.com`
+- **Path:** `www.acme.com/` (root path, catch-all)
 - **Ports:** 80/443 (exposed via NGINX Ingress)
 - **Public:** Yes
 - **Replicas:** 2+ (configurable via HPA)
@@ -126,10 +132,11 @@ This infrastructure implements the ACME platform—a containerized, cloud-native
 
 ### 2. **REST API**
 - **Image:** `acme/api`
-- **Domain:** `api.acme.com`
+- **Path:** `www.acme.com/api` (path-based routing, replaces domain-based api.acme.com)
 - **Port:** 443 (HTTPS only, no HTTP)
 - **Public:** Yes
 - **Replicas:** 2+ (configurable via HPA)
+- **Request Timeout:** 600 seconds (connect, send, read, body)
 - **Description:** Stateless REST API backend serving application logic
 - **Environment Variables:**
   - `POSTGRES_URL` - Connection string to PostgreSQL
@@ -216,10 +223,17 @@ modules/
 
 ### HTTPS/TLS Termination
 - **NGINX Ingress Controller** handles all TLS termination
-- **cert-manager** automates certificate provisioning and renewal
-- Supports Let's Encrypt (staging and production)
-- Configurable via Ingress annotations: `cert-manager.io/cluster-issuer`
-- Default issuer: `letsencrypt-prod`
+- **cert-manager** automates certificate provisioning and renewal (when enabled)
+- **TLS Secret:** `acme-tls` (referenced in Ingress resource)
+- **Certificate Lifecycle:**
+  - Supports Let's Encrypt (staging and production)
+  - Configurable via Ingress annotations: `cert-manager.io/cluster-issuer`
+  - Default issuer: `letsencrypt-prod` (optional, when cert-manager enabled)
+- **Request Timeouts:**
+  - Proxy Connect Timeout: 600 seconds
+  - Proxy Send Timeout: 600 seconds
+  - Proxy Read Timeout: 600 seconds
+  - Proxy Body Timeout: 600 seconds
 
 ### Secret Management
 - **External Secrets Operator** (optional) integrates with external vaults:
@@ -260,9 +274,16 @@ modules/
 
 ## Scalability
 
+### High Availability (NGINX Ingress)
+- **Replicas:** 2 (minimum for HA)
+- **Pod Disruption Budget:** Ensures 1 replica remains during maintenance
+- **Pod Anti-Affinity:** Spreads replicas across different nodes
+- **Metrics:** Enabled for Prometheus monitoring
+- **Security:** Non-root container, read-only filesystem
+
 ### Horizontal Pod Autoscaling (HPA)
-- **UI & API Pods:** Auto-scale based on CPU utilization
-- **Configured Replicas:** 2 (minimum) → configurable maximum
+- **UI & API Pods:** Auto-scale based on CPU (50%) and Memory (70%) utilization
+- **Configured Replicas:** 2 (minimum) → configurable maximum (default 10)
 - **Metrics Source:** Kubernetes Metrics Server (built-in)
 
 ### Resource Management
@@ -273,11 +294,15 @@ Application Pods:
   Memory Request:  128Mi
   Memory Limit:    512Mi
 
-NGINX Controller:
+NGINX Controller (HA):
+  Replicas:        2
   CPU Request:     100m
   CPU Limit:       500m
   Memory Request:  90Mi
   Memory Limit:    512Mi
+  Pod Disruption:  minAvailable = 1
+  Client timeout:  600s
+  Upstream timeout: 60s
 
 OpenTelemetry Collector:
   CPU Request:     100m
@@ -390,10 +415,33 @@ OpenTelemetry Collector:
 
 ---
 
+## Recent Improvements (Latest Updates)
+
+### Ingress Routing Enhancement
+- **Changed:** Routing model from multi-domain (`www.acme.com` + `api.acme.com`) to path-based routing
+- **New Model:** Single domain (`www.acme.com`) with path-based routing:
+  - `www.acme.com/` → UI service
+  - `www.acme.com/api` → API service
+- **Benefits:** Simpler TLS certificate management, cleaner DNS configuration, reduced operational complexity
+
+### NGINX Ingress Controller Hardening
+- **High Availability:** 2 replicas with pod anti-affinity for node distribution
+- **Reliability:** Pod Disruption Budget ensures 1 replica always available during maintenance
+- **Request Handling:**
+  - Client body timeout: 600s
+  - Client header timeout: 600s
+  - Upstream keepalive: 60s with 100 requests per connection
+  - Max body size: 20MB
+- **Security:** Non-root container with read-only filesystem
+- **Observability:** Metrics enabled for Prometheus monitoring
+
+---
+
 ## References
 
 - [CloudNativePG Documentation](https://cloudnative-pg.io/)
 - [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/)
+- [NGINX Ingress Configuration](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/)
 - [cert-manager Documentation](https://cert-manager.io/docs/)
 - [ArgoCD Getting Started](https://argo-cd.readthedocs.io/)
 - [OpenTelemetry Best Practices](https://opentelemetry.io/docs/best-practices/)
